@@ -38,7 +38,9 @@ export default function HomeScreen({ navigation }) {
           Mostrar Alerta
         </CustomButton>
 
-
+        <CustomButton onPress={() => navigation.navigate('Profile')}>
+          Ver API
+        </CustomButton>
       </View>
     </SafeAreaView>
   );
