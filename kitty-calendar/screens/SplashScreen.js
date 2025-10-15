@@ -11,9 +11,8 @@ export default function SplashScreen() {
       />
 
       <Text style={styles.titleText}>
-        Meow Daily
+        Kitty Calendar
       </Text>
-
     </View>
   );
 }
@@ -28,14 +27,14 @@ const styles = StyleSheet.create({
   logo: {
     width: 150,
     height: 150,
-    resizeMode: 'contain', // Asegura que la imagen se vea bien sin distorsionarse.
+    resizeMode: 'contain',
     marginBottom: 24,
   },
   titleText: {
     fontSize: 48,
     color: '#3d3d3d',
     fontWeight: '300',
-    width: 200, // <- ¡Clave! Limita el ancho del texto.
-    textAlign: 'center', // <- Centra el texto dentro de ese ancho limitado.
+    width: 200,
+    textAlign: 'center',
   },
 });
