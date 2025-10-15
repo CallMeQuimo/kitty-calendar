@@ -19,7 +19,7 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Este header funciona" />
+      <Header title="Este header funciona"/>
 
       <View style={styles.blank}>
           <Text>

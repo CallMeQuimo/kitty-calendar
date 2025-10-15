@@ -8,6 +8,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import SplashScreen from './screens/SplashScreen';
+import WelcomeScreen from './screens/WelcomeScreen';
 
 const MyStack = createStackNavigator();
 
@@ -15,6 +17,11 @@ export default function App() {
   return (
     <NavigationContainer>
       <MyStack.Navigator>
+        <MyStack.Screen
+          name="Welcome"
+          component={WelcomeScreen}
+          options={{ title: 'Pantalla de Bienvenida (sin login)' }}
+        />
         <MyStack.Screen
           name="Home"
           component={HomeScreen}
