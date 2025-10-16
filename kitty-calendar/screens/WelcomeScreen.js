@@ -5,26 +5,33 @@ import CustomButton from '../components/CustomButton';
 export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
-      <View>
-        <Image
+      <View style={styles.subContainer}>
+        <View style={styles.topContainer}>
+            <Image
             style={styles.logo}
             source={require('../images/kc-logo.png')}
-        />
-
-        <Text style={styles.subtitleText}>
+            />
+            <Text style={styles.titleText}>
             Kitty Calendar
-        </Text>
+            </Text>
+        </View>
+      
+        <View style={styles.bottomContainer}>
+            <CustomButton
+            onPress={() => Alert.alert('Inicio de Sesión', 'Aquí va la lógica de login!')}
+            style={styles.button}
+            >
+              Inicie sesión
+            </CustomButton>
+
+            <CustomButton
+            onPress={() => Alert.alert('Registro', 'Aquí va la lógica de registro!')}
+            style={styles.button}
+            >
+            Cree una cuenta
+            </CustomButton>
+        </View>
       </View>
-      
-
-      
-
-        <CustomButton
-          onPress={() => Alert.alert('Hay un skibidi en mi bota!')}
-        >
-        Boton de prueba funcional
-        </CustomButton>
-
     </View>
   );
 }
@@ -34,26 +41,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#C3B091',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   subContainer: {
+    height: '80%',
+    width: '80%',
+    backgroundColor: '#9A724A',
+    borderRadius: 30
+  },
+  topContainer: {
     flex: 1,
-    backgroundColor: '#C3B091',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  bottomContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 40,
+    gap: 16,
   },
   logo: {
     width: 150,
     height: 150,
     resizeMode: 'contain',
-    marginBottom: 0,
+    marginBottom: 20,
   },
-  subtitleText: {
-    fontSize: 24,
+  titleText: {
+    fontSize: 30,
     color: '#000000',
-    fontWeight: '200',
-    width: 200,
+    fontWeight: 'normal',
+    width: '80%',
     textAlign: 'center',
-    marginTop: 0
+    marginBottom: 20,
   },
+  button: {
+    width: '70%',
+    backgroundColor: '#000000',
+  }
 });
