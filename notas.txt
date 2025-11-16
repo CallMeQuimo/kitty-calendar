@@ -1,0 +1,6 @@
+.. Después tendré que editar:
+. components/CalendarView.js
+Porque actualmente solo muestra la librería (react-native-calendars), pero no tiene la lógica para pintar los puntos.
+
+. components/StatGraph.js
+Porque ahora mismo es solo una caja punteada que dice "[Gráfica]".
