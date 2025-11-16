@@ -1,35 +1,44 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import CustomButton from '../components/CustomButton';
 
-export default function WelcomeScreen() {
+// 1. Aceptamos la prop "navigation" que nos pasa el Stack Navigator
+export default function WelcomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.subContainer}>
         <View style={styles.topContainer}>
-            <Image
+          <Image
             style={styles.logo}
             source={require('../images/kc-logo.png')}
-            />
-            <Text style={styles.titleText}>
-            Kitty Calendar
-            </Text>
+          />
+          <Text style={styles.titleText}>Kitty Calendar</Text>
         </View>
-      
-        <View style={styles.bottomContainer}>
-            <CustomButton
-            onPress={() => Alert.alert('Inicio de Sesión', 'Aquí va la lógica de login!')}
-            style={styles.button}
-            >
-              Inicie sesión
-            </CustomButton>
 
-            <CustomButton
-            onPress={() => Alert.alert('Registro', 'Aquí va la lógica de registro!')}
+        <View style={styles.bottomContainer}>
+          {/* 2. Reemplazamos Alert con navigation.navigate() */}
+          <CustomButton
+            onPress={() => navigation.navigate('Login')} // Navega a Login
             style={styles.button}
-            >
-            Cree una cuenta
-            </CustomButton>
+          >
+            Ir a Login (Próximamente)
+          </CustomButton>
+
+          {/* 3. Reemplazamos Alert con navigation.navigate() */}
+          <CustomButton
+            onPress={() => navigation.navigate('Signup')} // Navega a Signup
+            style={styles.button}
+          >
+            Ir a Signup (Test)
+          </CustomButton>
+
+          {/* 4. Botón de DEBUG para ver ProfileScreen */}
+          <CustomButton
+            onPress={() => navigation.navigate('Profile')} // Navega a Profile
+            style={[styles.button, styles.debugButton]}
+          >
+            Ir a Profile (Test API)
+          </CustomButton>
         </View>
       </View>
     </View>
@@ -41,13 +50,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#C3B091',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   subContainer: {
     height: '80%',
     width: '80%',
     backgroundColor: '#9A724A',
-    borderRadius: 30
+    borderRadius: 30,
   },
   topContainer: {
     flex: 1,
@@ -78,5 +87,11 @@ const styles = StyleSheet.create({
   button: {
     width: '70%',
     backgroundColor: '#000000',
-  }
+  },
+  // Estilo simple para el botón de debug
+  debugButton: {
+    backgroundColor: '#555',
+    borderColor: '#fff',
+    borderWidth: 1,
+  },
 });

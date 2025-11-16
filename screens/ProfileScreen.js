@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 
-import Header from '../components/Header';
 import CustomButton from '../components/CustomButton';
 
 export default function ProfileScreen() {
