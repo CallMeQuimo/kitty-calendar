@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons'; // Importamos los íconos
+import { initDatabase } from './db/database';
 
 // --- 1. Contexto de Autenticación ---
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -159,6 +160,15 @@ function NavigationLayout() {
 
 // --- Punto de Entrada Principal ---
 export default function App() {
+React.useEffect(() => {
+  initDatabase()
+    .then(() => {
+      console.log('Base de datos inicializada correctamente');
+    })
+    .catch((err) => {
+      console.error('Error al inicializar la base de datos: ', err);
+    });
+}, []);
   return (
     <AuthProvider>
       <NavigationLayout />

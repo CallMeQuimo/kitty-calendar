@@ -59,7 +59,6 @@ async function fetchHolidays() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Perfil" />
 
       <View style={styles.body}>
         <Text style={styles.hTitle}>Próximos feriados en Argentina(pruebita)</Text>
