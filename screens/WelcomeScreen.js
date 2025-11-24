@@ -57,6 +57,12 @@ const styles = StyleSheet.create({
     width: '80%',
     backgroundColor: '#9A724A',
     borderRadius: 30,
+    // Sombra sutil
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   topContainer: {
     flex: 1,

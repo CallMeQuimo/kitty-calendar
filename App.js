@@ -15,9 +15,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
-import ProfileScreen from './screens/ProfileScreen'; // <-- IMPORTAMOS PROFILE
-// TODO: Crear e importar LoginScreen
-// import LoginScreen from './screens/LoginScreen';
+import ProfileScreen from './screens/ProfileScreen'; // <-- IMPORTAMOS PROFILE AUNQUE NO SEA PARTE DEL AUTHSTACK
+import LoginScreen from './screens/LoginScreen';
 
 // --- 3. Pantallas del Módulo Diario (DiaryStack) ---
 // TODO: Crear e importar DiaryMainScreen
@@ -35,7 +34,7 @@ import ProfileScreen from './screens/ProfileScreen'; // <-- IMPORTAMOS PROFILE
 // ... (resto de imports comentados)
 
 // --- 6. Pantallas Globales (MainStack) ---
-// TODO: Crear e importar SettingsScreen
+import DashboardScreen from './screens/DashboardScreen';
 // import SettingsScreen from './screens/SettingsScreen';
 
 
@@ -104,7 +103,11 @@ function DashboardTabs() {
       {/* <Tab.Screen name="BlocksTab" component={BlocksStack} options={{ title: 'Bloques' }} /> */}
       {/* <Tab.Screen name="CalendarTab" component={CalendarStack} options={{ title: 'Calendario' }} /> */}
        {/* Pantalla temporal para que la app no crashee, luego la borramos */}
-       <Tab.Screen name="Temp" component={WelcomeScreen} options={{ title: 'Temp' }} />
+       <Tab.Screen 
+        name="Home" 
+        component={DashboardScreen} 
+        options={{ title: 'Inicio' }} 
+      />
     </Tab.Navigator>
   );
 }
@@ -125,7 +128,7 @@ function NavigationLayout() {
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
           
-          {/* <AuthStack.Screen name="Login" component={LoginScreen} /> */}
+          <AuthStack.Screen name="Login" component={LoginScreen} />
           
           <AuthStack.Screen
             name="Signup"
