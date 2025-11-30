@@ -16,11 +16,13 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import BlockLibraryScreen from './screens/BlockLibraryScreen';
+import BlockCreateEditScreen from './screens/BlockCreateEditScreen';
+import BlockActiveScreen from './screens/BlockActiveScreen';
+
 // import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
 
-// --- Imports Pendientes (Descomentar a medida que se crean) ---
-import BlockLibraryScreen from './screens/BlockLibraryScreen';
-// import BlockCreateEditScreen from './screens/BlockCreateEditScreen'; // La crearemos pronto
+// --- Imports Pendientes ---
 // import DiaryMainScreen from './screens/DiaryMainScreen';
 // import CalendarScreen from './screens/CalendarScreen';
 
@@ -50,12 +52,20 @@ function BlocksStack() {
         component={BlockLibraryScreen} 
         options={{ title: 'Mis Bloques' }} 
       />
-      {/*<BlocksTabStack.Screen 
+      <BlocksTabStack.Screen 
         name="BlockCreateEdit" 
-        {component={BlockCreateEditScreen} 
+        component={BlockCreateEditScreen} 
         options={{ title: 'Gestionar Bloque' }} 
-      />*
-      {/* Aquí irá BlockActiveScreen */}
+      />
+      {/* --- NUEVA PANTALLA --- */}
+      <BlocksTabStack.Screen 
+        name="BlockActive" 
+        component={BlockActiveScreen} 
+        options={{ 
+          title: 'En Progreso', 
+          headerShown: false // Ocultamos el header nativo para usar nuestro diseño beige
+        }} 
+      />
     </BlocksTabStack.Navigator>
   );
 }
