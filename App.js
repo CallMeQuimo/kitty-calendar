@@ -25,7 +25,7 @@ import LoginScreen from './screens/LoginScreen';
 
 // --- 4. Pantallas del Módulo Bloques (BlocksStack) ---
 // TODO: Crear e importar BlockLibraryScreen
-// import BlockLibraryScreen from './screens/BlockLibraryScreen';
+import BlockLibraryScreen from './screens/BlockLibraryScreen';
 // ... (resto de imports comentados)
 
 // --- 5. Pantallas del Módulo Calendario (CalendarStack) ---
@@ -61,7 +61,11 @@ function DiaryStack() {
 function BlocksStack() {
   return (
     <BlocksTabStack.Navigator>
-      {/* <BlocksTabStack.Screen name="BlockLibrary" component={BlockLibraryScreen} options={{ title: 'Mis Bloques' }} /> */}
+      <BlocksTabStack.Screen 
+        name="BlockLibrary" 
+        component={BlockLibraryScreen} 
+        options={{ title: 'Mis Bloques' }} 
+      />
     </BlocksTabStack.Navigator>
   );
 }

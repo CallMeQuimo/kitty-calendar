@@ -15,17 +15,22 @@ export const initDatabase = async () => {
   }
 
   try {
-    // 1. Abrimos la base de datos (Ahora es asíncrono)
     db = await SQLite.openDatabaseAsync('kitty.db');
 
-    // 2. Creamos TODAS las tablas de una sola vez
-    // La nueva API permite ejecutar múltiples comandos SQL juntos separados por punto y coma.
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
 
       CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY NOT NULL,
         value TEXT NOT NULL
+      );
+      
+      CREATE TABLE IF NOT EXISTS users (
+        user_id INTEGER PRIMARY KEY NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL, -- En una app real, esto debería ser un hash
+        name TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS diary_entries (
@@ -48,11 +53,13 @@ export const initDatabase = async () => {
         FOREIGN KEY (tag_id) REFERENCES tags(tag_id)
       );
 
+      -- MODIFICADO: Se agregó 'estimated_time'
       CREATE TABLE IF NOT EXISTS blocks (
         block_id INTEGER PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
         description TEXT,
         type TEXT NOT NULL,
+        estimated_time INTEGER DEFAULT 0, 
         parent_roulette_id INTEGER,
         FOREIGN KEY (parent_roulette_id) REFERENCES blocks(block_id)
       );
@@ -64,13 +71,21 @@ export const initDatabase = async () => {
         FOREIGN KEY (block_id) REFERENCES blocks(block_id)
       );
 
+      -- NUEVA TABLA: Para cachear los feriados de la API
+      CREATE TABLE IF NOT EXISTS holidays (
+        holiday_id INTEGER PRIMARY KEY NOT NULL,
+        date TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT -- ej. 'inamovible', 'puente'
+      );
+
       CREATE TABLE IF NOT EXISTS calendar_events (
         event_id INTEGER PRIMARY KEY NOT NULL,
         type TEXT NOT NULL,
         title TEXT NOT NULL,
         start_datetime TEXT NOT NULL,
         end_datetime TEXT,
-        reminder INTEGER DEFAULT 0,
+        reminder INTEGER DEFAULT 0, -- Minutos antes del evento
         assigned_block_id INTEGER,
         FOREIGN KEY (assigned_block_id) REFERENCES blocks(block_id)
       );
@@ -95,8 +110,8 @@ export const initDatabase = async () => {
         FOREIGN KEY (subtask_id) REFERENCES subtasks(subtask_id)
       );
     `);
-    
-    console.log('✅ Tablas creadas/verificadas correctamente.');
+
+    console.log('✅ Tablas creadas/verificadas correctamente (Incl. updates).');
 
   } catch (error) {
     console.error('❌ Error al inicializar la BD:', error);

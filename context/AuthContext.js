@@ -1,97 +1,135 @@
 import React, { createContext, useState, useContext, useMemo, useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { executeSql } from '../db/database'; // Importamos el ejecutor SQL
 
-// 1. Crear el Contexto
-// El valor default (null) se usa cuando no hay un Provider
 const AuthContext = createContext(null);
 
-// 2. Crear el Proveedor (Provider)
-// Este componente envolverá nuestra app y proveerá el estado de auth
 export const AuthProvider = ({ children }) => {
-  // Estado para saber si el usuario está logueado o no
-  const [userToken, setUserToken] = useState(null);
-  // Estado para mostrar un "loading" mientras chequeamos si ya estaba logueado
+  const [userToken, setUserToken] = useState(null); // Aquí guardaremos el objeto usuario entero (id, email, name)
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulación de chequeo de token al iniciar la app
+  // --- 1. Cargar sesión persistente al iniciar la app ---
   useEffect(() => {
-    // Aquí iría la lógica para chequear si hay un token guardado en el dispositivo
-    // (ej. usando AsyncStorage o SecureStore).
-    // Como es una simulación, solo esperamos 1 segundo.
-    setTimeout(() => {
-      setIsLoading(false);
-      // setUserToken('dummy-token'); // Descomenta esta línea para simular que YA ESTABAS logueado
-    }, 1500); // 1.5 segundos de SplashScreen
+    const loadSession = async () => {
+      try {
+        // Buscamos si hay una sesión guardada en la tabla 'settings'
+        const result = await executeSql("SELECT value FROM settings WHERE key = 'user_session' LIMIT 1");
+        
+        if (result.rows.length > 0) {
+          const userData = JSON.parse(result.rows[0].value);
+          setUserToken(userData);
+        }
+      } catch (error) {
+        console.log('No se encontró sesión activa o error al cargar:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSession();
   }, []);
 
-  // Las funciones que la app podrá usar para cambiar el estado
-  // Usamos useMemo para evitar que estas funciones se re-creen en cada render
-  const authContextValue = useMemo(
-    () => ({
-      // Función para iniciar sesión (simulada)
-      signIn: async () => {
-        // Lógica de login... (llamar a API, guardar token, etc.)
-        // Por ahora, solo simulamos que encontramos un token
-        setIsLoading(true);
-        setTimeout(() => {
-          setUserToken('un-token-falso');
-          setIsLoading(false);
-        }, 1000);
-      },
-      // Función para cerrar sesión (simulada)
-      signOut: async () => {
-        setIsLoading(true);
-        setTimeout(() => {
-          setUserToken(null);
-          setIsLoading(false);
-        }, 500);
-      },
-      // Función para registrarse (simulada)
-      signUp: async () => {
-        // Lógica de registro...
-        setIsLoading(true);
-        setTimeout(() => {
-          setUserToken('un-token-falso-de-registro');
-          setIsLoading(false);
-        }, 1000);
-      },
-      // El token del usuario. Si es `null`, no está logueado.
-      userToken,
-      // El estado de carga (para el SplashScreen)
-      isLoading,
-    }),
-    [userToken, isLoading] // Estas dependencias aseguran que el valor se actualice
-  );
+  // --- Funciones de Autenticación ---
 
-  // Mostramos un spinner de carga si la app está en "isLoading"
+  const authActions = useMemo(() => ({
+    
+    // A) INICIAR SESIÓN
+    signIn: async (email, password) => {
+      setIsLoading(true);
+      try {
+        // 1. Buscar usuario en la BD
+        const sql = "SELECT * FROM users WHERE email = ? AND password = ? LIMIT 1";
+        // Nota: En producción, 'password' debería compararse con hash, aquí es texto plano por el MVP escolar
+        const result = await executeSql(sql, [email.toLowerCase(), password]);
+
+        if (result.rows.length > 0) {
+          const user = result.rows[0];
+          
+          // 2. Guardar sesión en la tabla 'settings' para persistencia
+          await executeSql(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES ('user_session', ?)", 
+            [JSON.stringify(user)]
+          );
+
+          // 3. Actualizar estado de la app
+          setUserToken(user); 
+        } else {
+          throw new Error('Credenciales incorrectas');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        throw error; // Re-lanzamos el error para que la pantalla lo maneje (muestre alerta)
+      } finally {
+        setIsLoading(false);
+      }
+    },
+
+    // B) CERRAR SESIÓN
+    signOut: async () => {
+      setIsLoading(true);
+      try {
+        // Borramos la sesión de la tabla 'settings'
+        await executeSql("DELETE FROM settings WHERE key = 'user_session'");
+        setUserToken(null);
+      } catch (error) {
+        console.error('Logout error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+
+    // C) REGISTRARSE (Post-Creación)
+    // Esta función se llama DESPUÉS de haber insertado el usuario en SignupScreen
+    signUp: async () => {
+      setIsLoading(true);
+      try {
+        // Obtenemos el último usuario creado (el que se acaba de registrar)
+        const sql = "SELECT * FROM users ORDER BY created_at DESC LIMIT 1";
+        const result = await executeSql(sql);
+
+        if (result.rows.length > 0) {
+          const user = result.rows[0];
+          // Guardamos sesión y actualizamos estado
+          await executeSql(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES ('user_session', ?)", 
+            [JSON.stringify(user)]
+          );
+          setUserToken(user);
+        }
+      } catch (error) {
+        console.error('Auto-login error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+
+    userToken, // Contiene info del usuario: { user_id: 1, email: '...', ... }
+    isLoading,
+  }), [userToken, isLoading]);
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
 
-  // Si no está cargando, proveemos el contexto a los hijos (la app)
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <AuthContext.Provider value={authActions}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// 3. Crear el Hook personalizado
-// Esto facilita que cualquier pantalla use el contexto
 export const useAuth = () => {
   return useContext(AuthContext);
 };
 
-// Estilos para el contenedor de carga
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff', // O el color de tu SplashScreen
+    backgroundColor: '#fff',
   },
 });
