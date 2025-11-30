@@ -1,44 +1,30 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons'; // Importamos los íconos
+import { Ionicons } from '@expo/vector-icons';
 import { initDatabase } from './db/database';
 
-// --- 1. Contexto de Autenticación ---
+// --- Contexto ---
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-// --- 2. Pantallas de Autenticación (AuthStack) ---
-// Importamos las pantallas que YA existen
+// --- Pantallas ---
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
-import ProfileScreen from './screens/ProfileScreen'; // <-- IMPORTAMOS PROFILE AUNQUE NO SEA PARTE DEL AUTHSTACK
 import LoginScreen from './screens/LoginScreen';
-
-// --- 3. Pantallas del Módulo Diario (DiaryStack) ---
-// TODO: Crear e importar DiaryMainScreen
-// import DiaryMainScreen from './screens/DiaryMainScreen';
-// ... (resto de imports comentados)
-
-// --- 4. Pantallas del Módulo Bloques (BlocksStack) ---
-// TODO: Crear e importar BlockLibraryScreen
-import BlockLibraryScreen from './screens/BlockLibraryScreen';
-// ... (resto de imports comentados)
-
-// --- 5. Pantallas del Módulo Calendario (CalendarStack) ---
-// TODO: Crear e importar CalendarScreen
-// import CalendarScreen from './screens/CalendarScreen';
-// ... (resto de imports comentados)
-
-// --- 6. Pantallas Globales (MainStack) ---
 import DashboardScreen from './screens/DashboardScreen';
-// import SettingsScreen from './screens/SettingsScreen';
+// import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
 
+// --- Imports Pendientes (Descomentar a medida que se crean) ---
+import BlockLibraryScreen from './screens/BlockLibraryScreen';
+// import BlockCreateEditScreen from './screens/BlockCreateEditScreen'; // La crearemos pronto
+// import DiaryMainScreen from './screens/DiaryMainScreen';
+// import CalendarScreen from './screens/CalendarScreen';
 
-// --- Inicializamos los Navegadores ---
+// --- Navegadores ---
 const AuthStack = createStackNavigator();
 const MainStack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -46,14 +32,12 @@ const DiaryTabStack = createStackNavigator();
 const BlocksTabStack = createStackNavigator();
 const CalendarTabStack = createStackNavigator();
 
-
-// --- Definimos los Stacks de cada Pestaña ---
-// (Esqueletos por ahora)
-
+// --- Stacks Secundarios ---
 function DiaryStack() {
   return (
     <DiaryTabStack.Navigator>
-      {/* <DiaryTabStack.Screen name="DiaryMain" component={DiaryMainScreen} options={{ title: 'Diario' }} /> */}
+       {/* Placeholder hasta crear DiaryMain */}
+       <DiaryTabStack.Screen name="DiaryPlaceholder" component={DashboardScreen} />
     </DiaryTabStack.Navigator>
   );
 }
@@ -66,6 +50,12 @@ function BlocksStack() {
         component={BlockLibraryScreen} 
         options={{ title: 'Mis Bloques' }} 
       />
+      {/*<BlocksTabStack.Screen 
+        name="BlockCreateEdit" 
+        {component={BlockCreateEditScreen} 
+        options={{ title: 'Gestionar Bloque' }} 
+      />*
+      {/* Aquí irá BlockActiveScreen */}
     </BlocksTabStack.Navigator>
   );
 }
@@ -73,54 +63,40 @@ function BlocksStack() {
 function CalendarStack() {
   return (
     <CalendarTabStack.Navigator>
-      {/* <CalendarTabStack.Screen name="CalendarMain" component={CalendarScreen} options={{ title: 'Calendario' }} /> */}
+       {/* Placeholder hasta crear CalendarScreen */}
+       <CalendarTabStack.Screen name="CalendarPlaceholder" component={DashboardScreen} />
     </CalendarTabStack.Navigator>
   );
 }
 
-// --- Definimos el Navegador de Pestañas (Bottom Tabs) ---
+// --- Tabs Principales ---
 function DashboardTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false, 
+        headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'DiaryTab') {
-            iconName = focused ? 'book' : 'book-outline';
-          } else if (route.name === 'BlocksTab') {
-            iconName = focused ? 'layers' : 'layers-outline';
-          } else if (route.name === 'CalendarTab') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          }
-          // Fallback icon just in case
-          if (!iconName) {
-            iconName = 'ellipse-outline';
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          if (route.name === 'DiaryTab') iconName = focused ? 'book' : 'book-outline';
+          else if (route.name === 'BlocksTab') iconName = focused ? 'layers' : 'layers-outline';
+          else if (route.name === 'CalendarTab') iconName = focused ? 'calendar' : 'calendar-outline';
+          return <Ionicons name={iconName || 'ellipse'} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#4F46E5', 
+        tabBarActiveTintColor: '#4F46E5',
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      {/* <Tab.Screen name="DiaryTab" component={DiaryStack} options={{ title: 'Diario' }} /> */}
-      {/* <Tab.Screen name="BlocksTab" component={BlocksStack} options={{ title: 'Bloques' }} /> */}
-      {/* <Tab.Screen name="CalendarTab" component={CalendarStack} options={{ title: 'Calendario' }} /> */}
-       {/* Pantalla temporal para que la app no crashee, luego la borramos */}
-       <Tab.Screen 
-        name="Home" 
-        component={DashboardScreen} 
-        options={{ title: 'Inicio' }} 
-      />
+      <Tab.Screen name="DiaryTab" component={DiaryStack} options={{ title: 'Diario' }} />
+      <Tab.Screen name="BlocksTab" component={BlocksStack} options={{ title: 'Bloques' }} />
+      <Tab.Screen name="CalendarTab" component={CalendarStack} options={{ title: 'Calendario' }} />
     </Tab.Navigator>
   );
 }
 
-// --- Definimos el Flujo de Navegación ---
+// --- Layout de Navegación ---
 function NavigationLayout() {
   const { userToken, isLoading } = useAuth();
 
-  // 1. Splash Screen mientras carga el AuthContext
   if (isLoading) {
     return <SplashScreen />;
   }
@@ -128,54 +104,51 @@ function NavigationLayout() {
   return (
     <NavigationContainer>
       {userToken == null ? (
-        // 2. Flujo de Autenticación (Usuario NO logueado)
+        // Stack No Autenticado
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
-          
           <AuthStack.Screen name="Login" component={LoginScreen} />
-          
-          <AuthStack.Screen
-            name="Signup"
-            component={SignupScreen}
-            options={{ headerShown: true, title: 'Crear Cuenta' }} // Mostramos header aquí
-          />
-
-          {/* ¡AQUÍ ESTÁ LA MAGIA! Añadimos Profile al stack de auth para testear */}
-          <AuthStack.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{ headerShown: true, title: 'Test API Feriados' }}
-          />
-
+          <AuthStack.Screen name="Signup" component={SignupScreen} options={{ headerShown: true, title: 'Crear Cuenta' }} />
         </AuthStack.Navigator>
       ) : (
-        // 3. Flujo Principal (Usuario SÍ logueado)
+        // Stack Autenticado
         <MainStack.Navigator>
-          {/* El Dashboard (con las pestañas) es la pantalla principal */}
-          <MainStack.Screen
-            name="Dashboard"
-            component={DashboardTabs}
-            options={{ headerShown: false }} // El Tab Navigator maneja sus propios headers
-          />
-          {/* --- Pantallas Modales (se abren por encima de las pestañas) --- */}
-          {/* <MainStack.Screen name="Settings" component={SettingsScreen} options={{ presentation: 'modal', title: 'Configuración' }} /> */}
+          <MainStack.Screen name="Dashboard" component={DashboardTabs} options={{ headerShown: false }} />
+          {/* Aquí irían pantallas modales globales como Settings */}
         </MainStack.Navigator>
       )}
     </NavigationContainer>
   );
 }
 
-// --- Punto de Entrada Principal ---
+// --- App Principal ---
 export default function App() {
-React.useEffect(() => {
-  initDatabase()
-    .then(() => {
-      console.log('Base de datos inicializada correctamente');
-    })
-    .catch((err) => {
-      console.error('Error al inicializar la base de datos: ', err);
-    });
-}, []);
+  // Estado para controlar si la BD ya inició
+  const [isDbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    const prepareApp = async () => {
+      try {
+        // 1. Iniciamos la BD y esperamos a que termine
+        await initDatabase();
+        console.log('Base de datos lista para usarse');
+      } catch (e) {
+        console.warn('Error iniciando BD:', e);
+      } finally {
+        // 2. Marcamos como lista para renderizar el resto de la app
+        setDbReady(true);
+      }
+    };
+
+    prepareApp();
+  }, []);
+
+  // Mientras la BD no esté lista, mostramos el Splash (o nada)
+  // Esto evita que AuthContext intente leer tablas que no existen aún.
+  if (!isDbReady) {
+    return <SplashScreen />;
+  }
+
   return (
     <AuthProvider>
       <NavigationLayout />

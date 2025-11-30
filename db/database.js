@@ -111,10 +111,10 @@ export const initDatabase = async () => {
       );
     `);
 
-    console.log('✅ Tablas creadas/verificadas correctamente (Incl. updates).');
+    console.log('Tablas creadas/verificadas correctamente (Incl. updates).');
 
   } catch (error) {
-    console.error('❌ Error al inicializar la BD:', error);
+    console.error('Error al inicializar la BD:', error);
     throw error;
   }
 };
