@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 
-import Header from '../components/Header';
 import CustomButton from '../components/CustomButton';
 
 export default function ProfileScreen() {
@@ -60,7 +59,6 @@ async function fetchHolidays() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Perfil" />
 
       <View style={styles.body}>
         <Text style={styles.hTitle}>Próximos feriados en Argentina(pruebita)</Text>

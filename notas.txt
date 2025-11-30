@@ -1,0 +1,3 @@
+.. Después tendré que editar:
+. components/StatGraph.js
+Porque ahora mismo es solo una caja punteada que dice "[Gráfica]".

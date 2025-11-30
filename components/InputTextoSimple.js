@@ -13,5 +13,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     fontSize: 14,
+    width: '100%', // Aseguramos que tome el ancho
   },
 });

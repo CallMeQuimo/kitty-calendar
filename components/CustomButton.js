@@ -11,7 +11,7 @@ export default function CustomButton({ children, onPress, style, disabled, loadi
       accessibilityRole="button"
     >
       {loading ? (
-        <ActivityIndicator />
+        <ActivityIndicator color="#fff" />
       ) : (
         <Text style={[styles.text, disabled && styles.textDisabled]}>{children}</Text>
       )}

@@ -1,67 +1,158 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet } from 'react-native';
-
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { initDatabase } from './db/database';
 
-// --- Importamos SOLO las pantallas que existen ---
-// (HomeScreen.js fue eliminada, como acordamos)
+// --- Contexto ---
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// --- Pantallas ---
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
-import ProfileScreen from './screens/ProfileScreen'; // La mantenemos solo por la prueba de API
+import LoginScreen from './screens/LoginScreen';
+import DashboardScreen from './screens/DashboardScreen';
+// import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
 
-// Creamos el Stack Navigator
-const Stack = createStackNavigator();
+// --- Imports Pendientes (Descomentar a medida que se crean) ---
+import BlockLibraryScreen from './screens/BlockLibraryScreen';
+// import BlockCreateEditScreen from './screens/BlockCreateEditScreen'; // La crearemos pronto
+// import DiaryMainScreen from './screens/DiaryMainScreen';
+// import CalendarScreen from './screens/CalendarScreen';
 
-export default function App() {
+// --- Navegadores ---
+const AuthStack = createStackNavigator();
+const MainStack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+const DiaryTabStack = createStackNavigator();
+const BlocksTabStack = createStackNavigator();
+const CalendarTabStack = createStackNavigator();
+
+// --- Stacks Secundarios ---
+function DiaryStack() {
+  return (
+    <DiaryTabStack.Navigator>
+       {/* Placeholder hasta crear DiaryMain */}
+       <DiaryTabStack.Screen name="DiaryPlaceholder" component={DashboardScreen} />
+    </DiaryTabStack.Navigator>
+  );
+}
+
+function BlocksStack() {
+  return (
+    <BlocksTabStack.Navigator>
+      <BlocksTabStack.Screen 
+        name="BlockLibrary" 
+        component={BlockLibraryScreen} 
+        options={{ title: 'Mis Bloques' }} 
+      />
+      {/*<BlocksTabStack.Screen 
+        name="BlockCreateEdit" 
+        {component={BlockCreateEditScreen} 
+        options={{ title: 'Gestionar Bloque' }} 
+      />*
+      {/* Aquí irá BlockActiveScreen */}
+    </BlocksTabStack.Navigator>
+  );
+}
+
+function CalendarStack() {
+  return (
+    <CalendarTabStack.Navigator>
+       {/* Placeholder hasta crear CalendarScreen */}
+       <CalendarTabStack.Screen name="CalendarPlaceholder" component={DashboardScreen} />
+    </CalendarTabStack.Navigator>
+  );
+}
+
+// --- Tabs Principales ---
+function DashboardTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          if (route.name === 'DiaryTab') iconName = focused ? 'book' : 'book-outline';
+          else if (route.name === 'BlocksTab') iconName = focused ? 'layers' : 'layers-outline';
+          else if (route.name === 'CalendarTab') iconName = focused ? 'calendar' : 'calendar-outline';
+          return <Ionicons name={iconName || 'ellipse'} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#4F46E5',
+        tabBarInactiveTintColor: 'gray',
+      })}
+    >
+      <Tab.Screen name="DiaryTab" component={DiaryStack} options={{ title: 'Diario' }} />
+      <Tab.Screen name="BlocksTab" component={BlocksStack} options={{ title: 'Bloques' }} />
+      <Tab.Screen name="CalendarTab" component={CalendarStack} options={{ title: 'Calendario' }} />
+    </Tab.Navigator>
+  );
+}
+
+// --- Layout de Navegación ---
+function NavigationLayout() {
+  const { userToken, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <SplashScreen />;
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        // Empezamos en la SplashScreen
-        initialRouteName="Splash"
-      >
-        {/* Pantalla de Carga */}
-        <Stack.Screen
-          name="Splash"
-          component={SplashScreen}
-          options={{ headerShown: false }} // Ocultamos el header aquí
-        />
-
-        {/* Pantalla de Bienvenida */}
-        <Stack.Screen
-          name="Welcome"
-          component={WelcomeScreen}
-          options={{ headerShown: false }} // Ocultamos el header aquí
-        />
-
-        {/* Pantalla de Registro (aunque esté vacía) */}
-        <Stack.Screen
-          name="Signup"
-          component={SignupScreen}
-          options={{ title: 'Crear Cuenta' }} // Usará el header de React Navigation
-        />
-
-        {/* Pantalla de Perfil (para probar la API de feriados) */}
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ title: 'Prueba de API Feriados' }} // Usará el header de React Navigation
-        />
-      </Stack.Navigator>
-      <StatusBar style="auto" />
+      {userToken == null ? (
+        // Stack No Autenticado
+        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+          <AuthStack.Screen name="Welcome" component={WelcomeScreen} />
+          <AuthStack.Screen name="Login" component={LoginScreen} />
+          <AuthStack.Screen name="Signup" component={SignupScreen} options={{ headerShown: true, title: 'Crear Cuenta' }} />
+        </AuthStack.Navigator>
+      ) : (
+        // Stack Autenticado
+        <MainStack.Navigator>
+          <MainStack.Screen name="Dashboard" component={DashboardTabs} options={{ headerShown: false }} />
+          {/* Aquí irían pantallas modales globales como Settings */}
+        </MainStack.Navigator>
+      )}
     </NavigationContainer>
   );
 }
 
-// (Estilos no son necesarios aquí, pero los dejo por si acaso)
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+// --- App Principal ---
+export default function App() {
+  // Estado para controlar si la BD ya inició
+  const [isDbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    const prepareApp = async () => {
+      try {
+        // 1. Iniciamos la BD y esperamos a que termine
+        await initDatabase();
+        console.log('Base de datos lista para usarse');
+      } catch (e) {
+        console.warn('Error iniciando BD:', e);
+      } finally {
+        // 2. Marcamos como lista para renderizar el resto de la app
+        setDbReady(true);
+      }
+    };
+
+    prepareApp();
+  }, []);
+
+  // Mientras la BD no esté lista, mostramos el Splash (o nada)
+  // Esto evita que AuthContext intente leer tablas que no existen aún.
+  if (!isDbReady) {
+    return <SplashScreen />;
+  }
+
+  return (
+    <AuthProvider>
+      <NavigationLayout />
+      <StatusBar style="auto" />
+    </AuthProvider>
+  );
+}
