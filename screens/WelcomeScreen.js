@@ -21,7 +21,7 @@ export default function WelcomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Login')} // Navega a Login
             style={styles.button}
           >
-            Ir a Login (Próximamente)
+            Iniciar sesión
           </CustomButton>
 
           {/* 3. Reemplazamos Alert con navigation.navigate() */}
@@ -29,7 +29,7 @@ export default function WelcomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Signup')} // Navega a Signup
             style={styles.button}
           >
-            Ir a Signup (Test)
+            Registrarse
           </CustomButton>
 
           {/* 4. Botón de DEBUG para ver ProfileScreen */}
