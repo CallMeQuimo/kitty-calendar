@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, FlatList, StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -8,22 +8,16 @@ import { executeSql } from '../db/database';
 
 // Componentes Reutilizables
 import ScreenContainer from '../components/ScreenContainer';
-import CustomButton from '../components/CustomButton';
 import ListItem from '../components/ListItem';
 import EmptyState from '../components/EmptyState';
-import CustomModal from '../components/CustomModal';
+import CustomButton from '../components/CustomButton';
 
 export default function BlockLibraryScreen() {
   const navigation = useNavigation();
   const [blocks, setBlocks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Estado para el Modal de confirmación de borrado
-  const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [blockToDelete, setBlockToDelete] = useState(null);
-
-  // --- 1. Cargar Bloques desde la BD ---
-  // Usamos useFocusEffect para que se ejecute cada vez que la pantalla gana foco
+  // Recargar al volver a la pantalla
   useFocusEffect(
     useCallback(() => {
       fetchBlocks();
@@ -33,109 +27,133 @@ export default function BlockLibraryScreen() {
   const fetchBlocks = async () => {
     setIsLoading(true);
     try {
-      // Obtenemos los bloques Y contamos sus subtareas en una sola consulta
       const sql = `
-        SELECT 
-          b.*, 
-          (SELECT COUNT(*) FROM subtasks s WHERE s.block_id = b.block_id) as subtask_count 
-        FROM blocks b
-        ORDER BY b.block_id DESC;
+        SELECT * FROM blocks 
+        WHERE parent_roulette_id IS NULL 
+        ORDER BY block_id DESC;
       `;
       const result = await executeSql(sql);
-      setBlocks(result.rows);
+      
+      // Enriquecemos la data (contar hijos o subtareas para el subtítulo)
+      const enrichedBlocks = [];
+      for (let i = 0; i < result.rows.length; i++) {
+        const block = result.rows[i];
+        let count = 0;
+        
+        if (block.type === 'roulette') {
+           // Contar opciones de ruleta
+           const countRes = await executeSql('SELECT COUNT(*) as c FROM blocks WHERE parent_roulette_id = ?', [block.block_id]);
+           count = countRes.rows[0].c;
+        } else {
+           // Contar subtareas normales
+           const countRes = await executeSql('SELECT COUNT(*) as c FROM subtasks WHERE block_id = ?', [block.block_id]);
+           count = countRes.rows[0].c;
+        }
+        
+        enrichedBlocks.push({ ...block, itemCount: count });
+      }
+
+      setBlocks(enrichedBlocks);
     } catch (error) {
-      console.error('Error al cargar bloques:', error);
+      console.error(error);
       Alert.alert('Error', 'No se pudieron cargar tus bloques.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- 2. Manejadores de Acción ---
-
-  const handleCreateBlock = () => {
-    // Navegar a la pantalla de creación (aún no creada)
-    navigation.navigate('BlockCreateEdit'); 
+  const handleBlockPress = (block) => {
+      // Navegación inteligente según tipo
+      if (block.type === 'roulette') {
+        navigation.navigate('Roulette', { blockId: block.block_id });
+      } else {
+        navigation.navigate('BlockActive', { blockId: block.block_id });
+      }
   };
 
-  const handleBlockPress = (block) => {
-    // Al presionar, damos opciones: ¿Editar o Ejecutar?
-    // Para el MVP, podríamos ir directo a Editar o mostrar un ActionSheet.
-    // Aquí simularé una navegación directa a la "Ejecución" si es lo que buscas,
-    // o a la edición. Según tu flujo, la biblioteca permite ver/editar/ejecutar.
-    
+  const handleEdit = (block) => {
+    navigation.navigate('BlockCreateEdit', { blockId: block.block_id });
+  };
+
+  // --- LÓGICA DE ELIMINACIÓN COMPLETA ---
+  const handleDeleteConfirm = (block) => {
     Alert.alert(
-      block.name,
-      '¿Qué deseas hacer con este bloque?',
+      'Eliminar Bloque',
+      `¿Estás seguro de que quieres eliminar "${block.name}"?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         { 
-          text: 'Editar', 
-          onPress: () => navigation.navigate('BlockCreateEdit', { blockId: block.block_id }) 
-        },
-        { 
-          text: '▶️ Ejecutar Ahora', 
-          onPress: () => navigation.navigate('BlockActive', { blockId: block.block_id }) 
-        },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: () => confirmDelete(block)
+          text: 'Eliminar', 
+          style: 'destructive', 
+          onPress: () => deleteBlock(block) 
         }
       ]
     );
   };
 
-  // --- 3. Lógica de Borrado ---
-
-  const confirmDelete = (block) => {
-    setBlockToDelete(block);
-    setDeleteModalVisible(true);
-  };
-
-  const handleDelete = async () => {
-    if (!blockToDelete) return;
-
+  const deleteBlock = async (block) => {
     try {
-      // Primero borramos subtareas asociadas (para mantener integridad si no hay CASCADE)
-      await executeSql('DELETE FROM subtasks WHERE block_id = ?', [blockToDelete.block_id]);
-      // Luego borramos el bloque
-      await executeSql('DELETE FROM blocks WHERE block_id = ?', [blockToDelete.block_id]);
-      
-      // Actualizamos la lista
+      if (block.type === 'roulette') {
+        // 1. Borrar HIJOS (Mini-bloques) primero para no dejar huérfanos
+        // Primero sus subtareas (nietos)
+        const children = await executeSql('SELECT block_id FROM blocks WHERE parent_roulette_id = ?', [block.block_id]);
+        for (const child of children.rows) {
+            await executeSql('DELETE FROM subtasks WHERE block_id = ?', [child.block_id]);
+        }
+        // Luego los mini-bloques
+        await executeSql('DELETE FROM blocks WHERE parent_roulette_id = ?', [block.block_id]);
+      } else {
+        // Bloque normal: Borrar sus subtareas
+        await executeSql('DELETE FROM subtasks WHERE block_id = ?', [block.block_id]);
+      }
+
+      // 2. Finalmente borrar el Bloque PADRE
+      await executeSql('DELETE FROM blocks WHERE block_id = ?', [block.block_id]);
+
+      // Recargar lista
       fetchBlocks();
-      setDeleteModalVisible(false);
-      setBlockToDelete(null);
+      
     } catch (error) {
-      console.error('Error al eliminar bloque:', error);
+      console.error(error);
       Alert.alert('Error', 'No se pudo eliminar el bloque.');
     }
   };
 
-  // --- 4. Renderizado ---
-
   const renderItem = ({ item }) => {
-    // Formateamos el subtítulo: "15 min • 5 tareas"
-    const timeString = item.estimated_time > 0 ? `${item.estimated_time} min` : null;
-    const taskString = `${item.subtask_count} tareas`;
-    const subtitle = [timeString, taskString].filter(Boolean).join(' • ');
+    // Subtítulo dinámico
+    const typeText = item.type === 'roulette' ? 'Ruleta' : 'Bloque';
+    const countText = item.type === 'roulette' ? `${item.itemCount} opciones` : `${item.itemCount} tareas`;
+    const timeText = item.estimated_time > 0 ? `• ${item.estimated_time} min` : '';
 
     return (
-      <ListItem
-        title={item.name}
-        subtitle={subtitle}
-        iconLeft={item.type === 'roulette' ? 'shuffle' : 'layers'} // Icono según tipo
-        onPress={() => handleBlockPress(item)}
-        // Podemos añadir un icono a la derecha como indicador
-        iconRight="ellipsis-horizontal"
-      />
+      <View style={styles.itemWrapper}>
+          {/* El ListItem maneja el click principal (Ejecutar/Ver) */}
+          <View style={{ flex: 1 }}>
+            <ListItem
+                title={item.name}
+                subtitle={`${typeText} • ${countText} ${timeText}`}
+                iconLeft={item.type === 'roulette' ? 'shuffle' : 'layers'}
+                onPress={() => handleBlockPress(item)}
+            />
+          </View>
+
+          {/* Botones de Acción Laterales (Editar / Borrar) */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity onPress={() => handleEdit(item)} style={styles.iconBtn}>
+                <Ionicons name="create-outline" size={22} color="#4B3621" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => handleDeleteConfirm(item)} style={styles.iconBtn}>
+                <Ionicons name="trash-outline" size={22} color="#8B0000" />
+            </TouchableOpacity>
+          </View>
+      </View>
     );
   };
 
   return (
-    <ScreenContainer>
+    <ScreenContainer style={styles.container}>
       
-      {/* Lista de Bloques */}
       <FlatList
         data={blocks}
         keyExtractor={(item) => item.block_id.toString()}
@@ -146,58 +164,35 @@ export default function BlockLibraryScreen() {
         ListEmptyComponent={
           !isLoading && (
             <EmptyState
-              title="Aún no tienes bloques"
-              message="Los bloques son rutinas o grupos de tareas. ¡Crea el primero ahora!"
-              // image={require('../assets/empty-blocks.png')} // Si tuvieras imagen
+              title="Tu biblioteca está vacía"
+              message="Crea bloques de tareas o ruletas para organizar tu día."
             />
           )
         }
       />
 
-      {/* Botón Flotante (FAB) para Crear */}
+      {/* FAB (Floating Action Button) para Crear */}
       <TouchableOpacity 
         style={styles.fab} 
-        onPress={handleCreateBlock}
+        onPress={() => navigation.navigate('BlockCreateEdit')}
         activeOpacity={0.8}
       >
         <Ionicons name="add" size={30} color="#fff" />
       </TouchableOpacity>
-
-      {/* Modal de Confirmación de Borrado */}
-      <CustomModal
-        visible={isDeleteModalVisible}
-        onClose={() => setDeleteModalVisible(false)}
-      >
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>¿Eliminar Bloque?</Text>
-          <Text style={styles.modalText}>
-            Se eliminará "{blockToDelete?.name}" y todas sus subtareas. Esta acción no se puede deshacer.
-          </Text>
-          
-          <View style={styles.modalButtons}>
-            <CustomButton 
-              onPress={() => setDeleteModalVisible(false)} 
-              style={[styles.modalBtn, styles.cancelBtn]}
-            >
-              Cancelar
-            </CustomButton>
-            <CustomButton 
-              onPress={handleDelete} 
-              style={[styles.modalBtn, styles.deleteBtn]}
-            >
-              Eliminar
-            </CustomButton>
-          </View>
-        </View>
-      </CustomModal>
 
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#F9FAFB', // Un fondo neutro claro
+    paddingHorizontal: 0, // ListItem ya tiene padding o el contenedor interno
+  },
   listContent: {
-    paddingBottom: 80, // Espacio para el FAB
+    paddingBottom: 100,
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
   emptyContainer: {
     flex: 1,
@@ -205,14 +200,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 50,
   },
+  // Wrapper para poner los botones de acción al lado del ListItem
+  itemWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden', // Para el borde
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    paddingRight: 10,
+    alignItems: 'center',
+  },
+  iconBtn: {
+    padding: 10,
+  },
   fab: {
     position: 'absolute',
     bottom: 24,
     right: 24,
-    backgroundColor: '#4F46E5', // Color principal (Indigo)
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    backgroundColor: '#4B3621', // Marrón oscuro acorde al diseño
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -220,38 +236,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-  },
-  // Estilos del contenido del Modal (ya que CustomModal es solo el wrapper)
-  modalContent: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 10,
-  },
-  modalBtn: {
-    flex: 1,
-  },
-  cancelBtn: {
-    backgroundColor: '#9CA3AF',
-  },
-  deleteBtn: {
-    backgroundColor: '#EF4444',
   },
 });

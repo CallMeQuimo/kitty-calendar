@@ -11,14 +11,18 @@ import { initDatabase } from './db/database';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // --- Pantallas ---
+// - AuthStack
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
 import LoginScreen from './screens/LoginScreen';
+// - MainStack
 import DashboardScreen from './screens/DashboardScreen';
+//- Tabs
 import BlockLibraryScreen from './screens/BlockLibraryScreen';
 import BlockCreateEditScreen from './screens/BlockCreateEditScreen';
 import BlockActiveScreen from './screens/BlockActiveScreen';
+import RouletteScreen from './screens/RouletteScreen';
 
 // import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
 
@@ -57,14 +61,15 @@ function BlocksStack() {
         component={BlockCreateEditScreen} 
         options={{ title: 'Gestionar Bloque' }} 
       />
-      {/* --- NUEVA PANTALLA --- */}
+      <BlocksTabStack.Screen 
+        name="Roulette" 
+        component={RouletteScreen} 
+        options={{ headerShown: false }} // Diseño personalizado sin header
+      />
       <BlocksTabStack.Screen 
         name="BlockActive" 
         component={BlockActiveScreen} 
-        options={{ 
-          title: 'En Progreso', 
-          headerShown: false // Ocultamos el header nativo para usar nuestro diseño beige
-        }} 
+        options={{ title: 'En Progreso', headerShown: false }} 
       />
     </BlocksTabStack.Navigator>
   );
