@@ -11,16 +11,24 @@ import { initDatabase } from './db/database';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // --- Pantallas ---
+// - AuthStack
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
 import LoginScreen from './screens/LoginScreen';
+// - MainStack
 import DashboardScreen from './screens/DashboardScreen';
+//- Tabs
+import BlockLibraryScreen from './screens/BlockLibraryScreen';
+import BlockCreateEditScreen from './screens/BlockCreateEditScreen';
+import BlockActiveScreen from './screens/BlockActiveScreen';
+import RouletteScreen from './screens/RouletteScreen';
+import CalendarScreen from './screens/CalendarScreen';
+import DiaryStatsScreen from './screens/DiaryStatsScreen';
+
 // import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
 
-// --- Imports Pendientes (Descomentar a medida que se crean) ---
-import BlockLibraryScreen from './screens/BlockLibraryScreen';
-// import BlockCreateEditScreen from './screens/BlockCreateEditScreen'; // La crearemos pronto
+// --- Imports Pendientes ---
 // import DiaryMainScreen from './screens/DiaryMainScreen';
 // import CalendarScreen from './screens/CalendarScreen';
 
@@ -36,8 +44,16 @@ const CalendarTabStack = createStackNavigator();
 function DiaryStack() {
   return (
     <DiaryTabStack.Navigator>
-       {/* Placeholder hasta crear DiaryMain */}
-       <DiaryTabStack.Screen name="DiaryPlaceholder" component={DashboardScreen} />
+      <DiaryTabStack.Screen 
+        name="DiaryMain" 
+        getComponent={() => require('./screens/DashboardScreen').default} // Placeholder temporal
+        options={{ title: 'Diario' }} 
+      />
+      <DiaryTabStack.Screen 
+        name="DiaryStats" 
+        component={DiaryStatsScreen} 
+        options={{ headerShown: false }} 
+      />
     </DiaryTabStack.Navigator>
   );
 }
@@ -50,12 +66,21 @@ function BlocksStack() {
         component={BlockLibraryScreen} 
         options={{ title: 'Mis Bloques' }} 
       />
-      {/*<BlocksTabStack.Screen 
+      <BlocksTabStack.Screen 
         name="BlockCreateEdit" 
-        {component={BlockCreateEditScreen} 
+        component={BlockCreateEditScreen} 
         options={{ title: 'Gestionar Bloque' }} 
-      />*
-      {/* Aquí irá BlockActiveScreen */}
+      />
+      <BlocksTabStack.Screen 
+        name="Roulette" 
+        component={RouletteScreen} 
+        options={{ headerShown: false }} // Diseño personalizado sin header
+      />
+      <BlocksTabStack.Screen 
+        name="BlockActive" 
+        component={BlockActiveScreen} 
+        options={{ title: 'En Progreso', headerShown: false }} 
+      />
     </BlocksTabStack.Navigator>
   );
 }
@@ -63,8 +88,7 @@ function BlocksStack() {
 function CalendarStack() {
   return (
     <CalendarTabStack.Navigator>
-       {/* Placeholder hasta crear CalendarScreen */}
-       <CalendarTabStack.Screen name="CalendarPlaceholder" component={DashboardScreen} />
+       <CalendarTabStack.Screen name="CalendarScreen" component={CalendarScreen} />
     </CalendarTabStack.Navigator>
   );
 }

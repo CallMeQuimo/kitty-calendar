@@ -1,13 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 
-// Variable para guardar la instancia de la base de datos
 let db = null;
 
-/**
- * Inicializa la base de datos.
- * Esta función debe llamarse al arrancar la app (en App.js).
- */
 export const initDatabase = async () => {
   if (Platform.OS === 'web') {
     console.warn('⚠️ La base de datos no funciona en Web.');
@@ -24,11 +19,11 @@ export const initDatabase = async () => {
         key TEXT PRIMARY KEY NOT NULL,
         value TEXT NOT NULL
       );
-      
+
       CREATE TABLE IF NOT EXISTS users (
         user_id INTEGER PRIMARY KEY NOT NULL,
         email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL, -- En una app real, esto debería ser un hash
+        password TEXT NOT NULL,
         name TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
@@ -53,7 +48,6 @@ export const initDatabase = async () => {
         FOREIGN KEY (tag_id) REFERENCES tags(tag_id)
       );
 
-      -- MODIFICADO: Se agregó 'estimated_time'
       CREATE TABLE IF NOT EXISTS blocks (
         block_id INTEGER PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
@@ -71,12 +65,11 @@ export const initDatabase = async () => {
         FOREIGN KEY (block_id) REFERENCES blocks(block_id)
       );
 
-      -- NUEVA TABLA: Para cachear los feriados de la API
       CREATE TABLE IF NOT EXISTS holidays (
         holiday_id INTEGER PRIMARY KEY NOT NULL,
         date TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
-        type TEXT -- ej. 'inamovible', 'puente'
+        type TEXT 
       );
 
       CREATE TABLE IF NOT EXISTS calendar_events (
@@ -85,7 +78,7 @@ export const initDatabase = async () => {
         title TEXT NOT NULL,
         start_datetime TEXT NOT NULL,
         end_datetime TEXT,
-        reminder INTEGER DEFAULT 0, -- Minutos antes del evento
+        reminder INTEGER DEFAULT 0,
         assigned_block_id INTEGER,
         FOREIGN KEY (assigned_block_id) REFERENCES blocks(block_id)
       );
@@ -111,7 +104,7 @@ export const initDatabase = async () => {
       );
     `);
 
-    console.log('Tablas creadas/verificadas correctamente (Incl. updates).');
+    console.log('Base de datos inicializada y verificada.');
 
   } catch (error) {
     console.error('Error al inicializar la BD:', error);
@@ -119,23 +112,14 @@ export const initDatabase = async () => {
   }
 };
 
-/**
- * Helper genérico para ejecutar consultas SQL.
- * Detecta automáticamente si es un SELECT o una modificación.
- */
 export const executeSql = async (sql, params = []) => {
   if (Platform.OS === 'web' || !db) return { rows: [], lastInsertRowId: null };
-
-  // Normalizamos la consulta para saber qué tipo es
   const statement = sql.trim();
-
   if (statement.toUpperCase().startsWith('SELECT')) {
-    // Para LEER datos (SELECT) usamos getAllAsync
     const rows = await db.getAllAsync(sql, params);
-    return { rows: rows }; // Devolvemos un array directo
+    return { rows: rows };
   } else {
-    // Para ESCRIBIR datos (INSERT, UPDATE, DELETE) usamos runAsync
     const result = await db.runAsync(sql, params);
-    return result; // Devuelve { lastInsertRowId, changes }
+    return result;
   }
 };
