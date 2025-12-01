@@ -3,6 +3,8 @@ import { FlatList } from 'react-native';
 import ScreenContainer from '../components/ScreenContainer';
 import ListItem from '../components/ListItem';
 
+/* HOLA SOY LUDMILA */
+
 const MOCK_DATA = [
   { id: '1', title: 'Rutina Mañana', date: '2024-11-20', status: 'Completado' },
   { id: '2', title: 'Gimnasio', date: '2024-11-19', status: 'Incompleto' },
