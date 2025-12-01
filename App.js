@@ -23,6 +23,8 @@ import BlockLibraryScreen from './screens/BlockLibraryScreen';
 import BlockCreateEditScreen from './screens/BlockCreateEditScreen';
 import BlockActiveScreen from './screens/BlockActiveScreen';
 import RouletteScreen from './screens/RouletteScreen';
+import CalendarScreen from './screens/CalendarScreen';
+import DiaryStatsScreen from './screens/DiaryStatsScreen';
 
 // import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
 
@@ -42,8 +44,16 @@ const CalendarTabStack = createStackNavigator();
 function DiaryStack() {
   return (
     <DiaryTabStack.Navigator>
-       {/* Placeholder hasta crear DiaryMain */}
-       <DiaryTabStack.Screen name="DiaryPlaceholder" component={DashboardScreen} />
+      <DiaryTabStack.Screen 
+        name="DiaryMain" 
+        getComponent={() => require('./screens/DashboardScreen').default} // Placeholder temporal
+        options={{ title: 'Diario' }} 
+      />
+      <DiaryTabStack.Screen 
+        name="DiaryStats" 
+        component={DiaryStatsScreen} 
+        options={{ headerShown: false }} 
+      />
     </DiaryTabStack.Navigator>
   );
 }
@@ -78,8 +88,7 @@ function BlocksStack() {
 function CalendarStack() {
   return (
     <CalendarTabStack.Navigator>
-       {/* Placeholder hasta crear CalendarScreen */}
-       <CalendarTabStack.Screen name="CalendarPlaceholder" component={DashboardScreen} />
+       <CalendarTabStack.Screen name="CalendarScreen" component={CalendarScreen} />
     </CalendarTabStack.Navigator>
   );
 }
