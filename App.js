@@ -16,21 +16,29 @@ import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import SignupScreen from './screens/SignupScreen';
 import LoginScreen from './screens/LoginScreen';
-// - MainStack
+
+// - MainStack (Globales)
 import DashboardScreen from './screens/DashboardScreen';
-//- Tabs
+import SettingsScreen from './screens/SettingsScreen'; // ✅ NUEVA
+
+// -- Tabs
+// - Blocks Tab
 import BlockLibraryScreen from './screens/BlockLibraryScreen';
 import BlockCreateEditScreen from './screens/BlockCreateEditScreen';
 import BlockActiveScreen from './screens/BlockActiveScreen';
+import BlockHistoryScreen from './screens/BlockHistoryScreen'; // ✅ NUEVA
 import RouletteScreen from './screens/RouletteScreen';
+
+// - Calendar Tab
 import CalendarScreen from './screens/CalendarScreen';
+import EventCreateEditScreen from './screens/EventCreateEditScreen'; // ✅ NUEVA
+import EventDetailScreen from './screens/EventDetailScreen'; // ✅ NUEVA
+
+// - Diary Tab
+import DiaryMainScreen from './screens/DiaryMainScreen'; // ✅ NUEVA
+import DiaryCreateEntryScreen from './screens/DiaryCreateEntryScreen'; // ✅ NUEVA
 import DiaryStatsScreen from './screens/DiaryStatsScreen';
 
-// import ProfileScreen from './screens/ProfileScreen'; // Opcional para pruebas
-
-// --- Imports Pendientes ---
-// import DiaryMainScreen from './screens/DiaryMainScreen';
-// import CalendarScreen from './screens/CalendarScreen';
 
 // --- Navegadores ---
 const AuthStack = createStackNavigator();
@@ -46,8 +54,13 @@ function DiaryStack() {
     <DiaryTabStack.Navigator>
       <DiaryTabStack.Screen 
         name="DiaryMain" 
-        getComponent={() => require('./screens/DashboardScreen').default} // Placeholder temporal
-        options={{ title: 'Diario' }} 
+        component={DiaryMainScreen} 
+        options={{ title: 'Mi Diario', headerShown: false }} 
+      />
+      <DiaryTabStack.Screen 
+        name="DiaryCreateEntry" 
+        component={DiaryCreateEntryScreen} 
+        options={{ title: 'Nueva Entrada' }} 
       />
       <DiaryTabStack.Screen 
         name="DiaryStats" 
@@ -57,6 +70,7 @@ function DiaryStack() {
     </DiaryTabStack.Navigator>
   );
 }
+
 
 function BlocksStack() {
   return (
@@ -74,12 +88,17 @@ function BlocksStack() {
       <BlocksTabStack.Screen 
         name="Roulette" 
         component={RouletteScreen} 
-        options={{ headerShown: false }} // Diseño personalizado sin header
+        options={{ headerShown: false }} 
       />
       <BlocksTabStack.Screen 
         name="BlockActive" 
         component={BlockActiveScreen} 
         options={{ title: 'En Progreso', headerShown: false }} 
+      />
+      <BlocksTabStack.Screen 
+        name="BlockHistory" 
+        component={BlockHistoryScreen} 
+        options={{ title: 'Historial' }} 
       />
     </BlocksTabStack.Navigator>
   );
@@ -88,7 +107,21 @@ function BlocksStack() {
 function CalendarStack() {
   return (
     <CalendarTabStack.Navigator>
-       <CalendarTabStack.Screen name="CalendarScreen" component={CalendarScreen} />
+       <CalendarTabStack.Screen 
+         name="CalendarScreen" 
+         component={CalendarScreen} 
+         options={{ headerShown: false }}
+       />
+       <CalendarTabStack.Screen 
+         name="EventCreateEdit" 
+         component={EventCreateEditScreen} 
+         options={{ title: 'Gestionar Evento' }} 
+       />
+       <CalendarTabStack.Screen 
+         name="EventDetail" 
+         component={EventDetailScreen} 
+         options={{ title: 'Detalle del Evento' }} 
+       />
     </CalendarTabStack.Navigator>
   );
 }
@@ -137,8 +170,15 @@ function NavigationLayout() {
       ) : (
         // Stack Autenticado
         <MainStack.Navigator>
+          {/* DashboardTabs contiene los 3 Tabs principales */}
           <MainStack.Screen name="Dashboard" component={DashboardTabs} options={{ headerShown: false }} />
-          {/* Aquí irían pantallas modales globales como Settings */}
+          
+          {/* Pantallas globales fuera de los tabs (como Settings) */}
+          <MainStack.Screen 
+            name="Settings" 
+            component={SettingsScreen} 
+            options={{ title: 'Configuración' }} 
+          />
         </MainStack.Navigator>
       )}
     </NavigationContainer>
@@ -167,8 +207,6 @@ export default function App() {
     prepareApp();
   }, []);
 
-  // Mientras la BD no esté lista, mostramos el Splash (o nada)
-  // Esto evita que AuthContext intente leer tablas que no existen aún.
   if (!isDbReady) {
     return <SplashScreen />;
   }
