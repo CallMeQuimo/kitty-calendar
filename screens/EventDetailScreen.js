@@ -35,7 +35,7 @@ export default function EventDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert('Eliminar', '¿Borrar este evento?', [
+    Alert.alert('Eliminar', `¿Borrar este ${event.type === 'task' ? 'tarea' : 'evento'}?`, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Borrar', style: 'destructive', onPress: async () => {
           await executeSql('DELETE FROM calendar_events WHERE event_id = ?', [eventId]);
@@ -47,7 +47,6 @@ export default function EventDetailScreen() {
   if (loading) return <ScreenContainer><ActivityIndicator /></ScreenContainer>;
   if (!event) return null;
 
-  // Formateo de fecha
   const dateObj = new Date(event.start_datetime);
   const dateStr = dateObj.toLocaleDateString();
   const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -69,14 +68,13 @@ export default function EventDetailScreen() {
           <Ionicons name="time-outline" size={24} color="#4B3621" />
           <Text style={styles.infoText}>{dateStr} a las {timeStr}</Text>
         </View>
-
-        {/* Espacio para más detalles si los hubiera */}
       </View>
 
       <View style={{ flex: 1 }} />
 
       <CustomButton onPress={handleDelete} style={styles.deleteBtn}>
-        Eliminar Evento
+        {/* CORREGIDO: Texto dinámico */}
+        Eliminar {event.type === 'task' ? 'Tarea' : 'Evento'}
       </CustomButton>
 
       <CustomButton onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -97,7 +95,6 @@ const styles = StyleSheet.create({
   eventTitle: { fontSize: 24, fontWeight: 'bold', color: '#000', textAlign: 'center', marginBottom: 30 },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.2)', padding: 15, borderRadius: 15, width: '100%', justifyContent: 'center' },
   infoText: { fontSize: 18, color: '#000' },
-  
   deleteBtn: { backgroundColor: '#8B0000', borderRadius: 30, marginBottom: 15 },
-  backBtn: { backgroundColor: 'transparent', borderWidth: 2, borderColor: '#4B3621', borderRadius: 30 },
+  backBtn: { backgroundColor: 'transparent', borderWidth: 2, borderColor: '#4B3621', borderRadius: 30, marginBottom: 20 },
 });

@@ -2,11 +2,12 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-
 import { executeSql } from '../db/database';
+
 import ScreenContainer from '../components/ScreenContainer';
 import EmptyState from '../components/EmptyState';
 import ListItem from '../components/ListItem';
+import CustomButton from '../components/CustomButton';
 
 export default function DiaryMainScreen() {
   const navigation = useNavigation();
@@ -22,7 +23,6 @@ export default function DiaryMainScreen() {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      // Ordenamos por fecha descendente (más nuevo arriba)
       const result = await executeSql('SELECT * FROM diary_entries ORDER BY date DESC');
       setEntries(result.rows);
     } catch (error) {
@@ -34,22 +34,28 @@ export default function DiaryMainScreen() {
   };
 
   const getMoodIcon = (moodVal) => {
-    // Mapeo simple de mood 1-5 a emojis
     const moods = ['😭', '😟', '😐', '🙂', '😁'];
     return moods[moodVal - 1] || '😐';
+  };
+
+  const handleEditEntry = (item) => {
+    // Navegamos a la pantalla de "creación" pero pasándole la entrada existente para editar
+    navigation.navigate('DiaryCreateEntry', { existingEntry: item });
   };
 
   return (
     <ScreenContainer style={styles.background}>
       <Text style={styles.screenTitle}>MI DIARIO</Text>
 
-      {/* Botón ver estadísticas */}
-      <TouchableOpacity 
-        style={styles.statsLink} 
-        onPress={() => navigation.navigate('DiaryStats')}
-      >
-        <Text style={styles.statsText}>Ver estadísticas y gráficas {'>'}</Text>
-      </TouchableOpacity>
+      {/* Botón estadísticas mejorado */}
+      <View style={{ paddingHorizontal: 40, marginBottom: 15 }}>
+        <CustomButton 
+            onPress={() => navigation.navigate('DiaryStats')}
+            style={styles.statsButton}
+        >
+            <Text style={{color: '#4B3621', fontWeight: 'bold'}}>Ver estadísticas 📊</Text>
+        </CustomButton>
+      </View>
 
       <FlatList 
         data={entries}
@@ -57,11 +63,11 @@ export default function DiaryMainScreen() {
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <ListItem 
-            title={item.date} // O formatear fecha
-            subtitle={item.notes || 'Sin notas...'}
+            title={item.date}
+            subtitle={item.notes ? (item.notes.length > 30 ? item.notes.substring(0,30)+'...' : item.notes) : 'Sin notas...'}
             iconLeft={getMoodIcon(item.mood)}
-            onPress={() => Alert.alert('Detalle', item.notes)} // Simple alert para MVP
-            style={styles.entryItem}
+            isEmojiIcon={true} // CORREGIDO: Evita que ListItem intente buscar el emoji en Ionicons
+            onPress={() => handleEditEntry(item)} // CORREGIDO: Navega a edición
           />
         )}
         ListEmptyComponent={
@@ -69,7 +75,6 @@ export default function DiaryMainScreen() {
         }
       />
 
-      {/* FAB para Crear */}
       <TouchableOpacity 
         style={styles.fab} 
         onPress={() => navigation.navigate('DiaryCreateEntry')}
@@ -83,9 +88,8 @@ export default function DiaryMainScreen() {
 
 const styles = StyleSheet.create({
   background: { backgroundColor: '#C3B091', paddingHorizontal: 0 },
-  screenTitle: { fontSize: 20, color: '#000', textAlign: 'center', marginTop: 20, fontWeight: 'bold' },
-  statsLink: { alignSelf: 'center', padding: 10, marginBottom: 10 },
-  statsText: { color: '#4B3621', textDecorationLine: 'underline' },
+  screenTitle: { fontSize: 20, color: '#000', textAlign: 'center', marginTop: 20, marginBottom: 10, fontWeight: 'bold' },
+  statsButton: { backgroundColor: 'rgba(255,255,255,0.3)', height: 40, borderRadius: 20 },
   listContent: { paddingHorizontal: 20, paddingBottom: 100 },
   fab: {
     position: 'absolute', bottom: 20, right: 20,
